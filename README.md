@@ -1,5 +1,5 @@
 # AFM3Dgl
-Delphi project for reading Digiscape 3 AFM files and displaying as interactive 3D surface 
+Delphi project for reading Nanoscope 3 AFM files and displaying as interactive 3D surface 
 
 Written and used during my PhD. Screenshot is of plasma treated brucite rendered in red-green stereo
 
