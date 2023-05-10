@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ComCtrls, OpenGL, Math;
+  StdCtrls, ComCtrls, OpenGL, Math, UITypes;
 
 type
   TTipArtefact = class(TForm)

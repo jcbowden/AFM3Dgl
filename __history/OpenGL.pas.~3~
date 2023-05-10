@@ -5520,15 +5520,11 @@ end;
 //----------------------------------------------------------------------------------------------------------------------
 
 function InitOpenGL: Boolean;
-var p: pointer;
+
 begin
   if (GLHandle = 0) or (GLUHandle = 0) then
   begin
-    if SizeOf(p) = 4 then
-      Result := InitOpenGLFromLibrary('OpenGL32.DLL', 'GLU32.DLL')
-    else if SizeOf(p) = 8 then
-      Result := InitOpenGLFromLibrary('OpenGL.DLL', 'GLU.DLL');
-
+    Result := InitOpenGLFromLibrary('OpenGL.DLL', 'GLU.DLL');
   end
   else Result := True;
 end;

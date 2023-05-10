@@ -284,7 +284,7 @@ Var
 StopTime, StartTime : DWord ;
 jitter, TempInt : Integer ;
 TempStr : String ;
-JitArray : array[0..8, 0..1] of GLDouble ;
+JitArray : array[0..8, 0..1] of TGLdouble ;
 //ErrorCode : GLenum ;
 TempFloat1, OrthoX, OrthoY : Single ;
 begin
@@ -543,7 +543,7 @@ end;
 procedure TForm1.Edit8MouseMove(Sender: TObject; Shift: TShiftState; X,
   Y: Integer);
  Var
- TempFloat : GLFloat ; 
+ TempFloat : TGLfloat ;
 begin
 If MouseDownMat Then
   begin

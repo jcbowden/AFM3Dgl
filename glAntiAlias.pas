@@ -7,13 +7,13 @@ Const
 PI1 = 3.14159265358979323846 ;
 
 Type
-    TNormalDataD = array [1..4] of GLDouble ;
-    TNormalDataS = array [1..4] of GLFloat ;
+    TNormalDataD = array [1..4] of TGLdouble ;
+    TNormalDataS = array [1..4] of TGLfloat ;
 
 procedure GLAccumFrustrum(ViewPortCW, ViewPortCH,left, right, bottom, top, near1, far1,
-                                pixdx, pixdy, eyedx, eyedy, focus : GLDouble) ;
+                                pixdx, pixdy, eyedx, eyedy, focus : TGLdouble) ;
 procedure GLAccumPerspective(ViewPortCW, ViewPortCH,fovy, aspect, near1, far1, pixdx,
-                                pixdy, eyedx, eyedy, focus : GLDouble) ;
+                                pixdy, eyedx, eyedy, focus : TGLdouble) ;
 
 Function GetNormalD(V1, V2, V3: array of Double; Normalize : Bool) : TNormalDataD ;
 Function GetNormalS(V1, V2, V3: array of Single) : TNormalDataS ;
@@ -24,9 +24,9 @@ implementation   // this code is translated from C code found in the OpenGL Prog
 
 
 procedure GLAccumFrustrum(ViewPortCW, ViewPortCH, left, right, bottom, top, near1, far1,
-                                pixdx, pixdy, eyedx, eyedy, focus : GLDouble) ;
+                                pixdx, pixdy, eyedx, eyedy, focus : TGLdouble) ;
 Var
-  xwsize, ywsize, dx, dy : GLDouble ;
+  xwsize, ywsize, dx, dy : TGLdouble ;
 begin
 //  glGetIntegerv(GL_VIEWPORT, @Viewport[1]) ;
 
@@ -46,9 +46,9 @@ end ;
 
 
 procedure GLAccumPerspective(ViewPortCW, ViewPortCH, fovy, aspect, near1, far1, pixdx,
-                                pixdy, eyedx, eyedy, focus : GLDouble) ;
+                                pixdy, eyedx, eyedy, focus : TGLdouble) ;
 Var
-  fov2, left, right, bottom, top : GLDouble ;
+  fov2, left, right, bottom, top : TGLdouble ;
 begin
   fov2 := ((fovy*PI1)/ 180.0) / 2.0 ; // convert angle from degrees to radians
   top := near1 / (cos(fov2) /sin(fov2)) ;
@@ -63,7 +63,7 @@ end ;
 Function GetNormalS(V1, V2, V3: array of Single): TNormalDataS ;
 Var
 S1, S2 : array[0..2] of Single ;
-Length : glDouble ;
+Length : TGLdouble ;
 begin
 
 S1[0] := V1[0]-V2[0] ;  S1[1] := V1[1]-V2[1] ; S1[2] := V1[2]-V2[2] ;  // convert 3 points into 2 vectors
@@ -87,7 +87,7 @@ end ;
 Function GetNormalD(V1, V2, V3: array of Double; Normalize : Bool): TNormalDataD ;
 Var
 S1, S2 : array[0..2] of Double ;
-Length : glDouble ;
+Length : TGLdouble ;
 begin
 
 S1[0] := V1[0]-V2[0] ;  S1[1] := V1[1]-V2[1] ; S1[2] := V1[2]-V2[2] ;  // convert 3 points into 2 vectors

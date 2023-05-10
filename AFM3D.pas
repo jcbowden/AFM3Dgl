@@ -8,8 +8,9 @@ unit AFM3D;
 interface
 
 uses
-  Windows, Forms, Graphics, OpenGL, Classes, ExtCtrls, Messages, Controls, ComCtrls,
-  StdCtrls, Spin, Menus, Dialogs, SysUtils, Buttons, clipbrd, ShellAPI ;
+  Windows, Forms, Graphics, OpenGL, GeometryTypes, Classes, ExtCtrls, Messages,
+  Controls, ComCtrls, StdCtrls, Spin, Menus, Dialogs, SysUtils, Buttons, clipbrd,
+  ShellAPI, UITypes ;
 
 const
 //PYRLIST=1 ;
@@ -27,25 +28,25 @@ Var
     DirX, DirY, DirZ : Real ;
     Angle, PriorAngle : Single ;
     ZMagValue, LastZMagValue  : Single ;
-    BKGRed, BKGGreen, BKGBlue : GLClampf ;
+    BKGRed, BKGGreen, BKGBlue : TGLclampd ;
     RC    : HGLRC ;   // josh might need this
-    TextColor, BarColor, LevelColor, BorderColor, EnvCol : array [0..3] of glFloat ;
+    TextColor, BarColor, LevelColor, BorderColor, EnvCol : array [0..3] of TGLfloat ;
     NumTriangle : Integer ;
 Type
-    TxyzArrayD = array [1..3] of GLDouble ;
-    TxyzArrayS = array [1..3] of GLFloat ;
+    TxyzArrayD = array [1..3] of TGLdouble ;
+    TxyzArrayS = array [1..3] of TGLfloat ;
 // procedure GetShadow(Sender : TObject) ; // declaration
 procedure DisplayObjects(Sender : TObject) ; // declaration
 procedure DisplayScales(Sender : TObject) ;  // declaration
 
 //procedure XYScaleText(Sender : TObject) ;    // declaration
-Function GetXYZCoord (Sender : TObject; Shift: TShiftState; X, Y : GLInt) : TxyzArrayD ;  // declaration
+Function GetXYZCoord (Sender : TObject; Shift: TShiftState; X, Y : TGLint) : TxyzArrayD ;  // declaration
 procedure StereoVision(Sender: TObject);     // declaration
-procedure ChangeAlpha(Sender : TObject; AlphaValue : GLFloat) ; // declaration
+procedure ChangeAlpha(Sender : TObject; AlphaValue : TGLfloat) ; // declaration
 Function LoadOrig(Filename : String) : TMemoryStream ;     // declaration
 procedure OpenContinue(Sender : TObject) ;   // declaration
 procedure GetColorInfo1(sender : TObject) ;  // declaration
-Procedure DisplayEyePointer(DispXpos, DispYpos, DispZpos: GLFloat) ;   // declaration
+Procedure DisplayEyePointer(DispXpos, DispYpos, DispZpos: TGLfloat) ;   // declaration
 Procedure ShowRedSquare ;  // declaration
 
 type
@@ -186,25 +187,25 @@ var
   DataLength, DataOffset : Integer ;
   DataOrig : Array[0..511,0..511] of SmallInt ;
   MaxZ, MinZ : SmallInt ;
-  CenterX, CenterY, CenterZ, EyeY, EyeZ, EyeX : GLDouble ;
-  SpotEx : GLFloat ;
-  SpotCutoff : GLFloat ;
-  L0_POS, L1_POS : array[0..3] of GLFloat ;
-  L0_Dir, L1_Dir : array[0..2] of GLFloat ;
-  LM_Amb : array[0..3] of GLFloat ;
-  L0_AMBI : array[0..3] of GLFloat ;
-  L0_SPEC, L1_SPEC : array[0..3] of GLFloat ;
-  L0_Dif, L1_Dif : array[0..3] of GLFloat ;
-  Mat_Spec : array[0..3] of GLFloat ;
-  Mat_Dif : array[0..3] of GLFloat ;
-  Mat_Amb : array[0..3] of GLFloat ;
-  Mat_Emi : array[0..3] of GLFloat ;
-  Shine : GLFloat ;
+  CenterX, CenterY, CenterZ, EyeY, EyeZ, EyeX : TGLdouble ;
+  SpotEx : TGLfloat ;
+  SpotCutoff : TGLfloat ;
+  L0_POS, L1_POS : array[0..3] of TGLfloat ;
+  L0_Dir, L1_Dir : array[0..2] of TGLfloat ;
+  LM_Amb : array[0..3] of TGLfloat ;
+  L0_AMBI : array[0..3] of TGLfloat ;
+  L0_SPEC, L1_SPEC : array[0..3] of TGLfloat ;
+  L0_Dif, L1_Dif : array[0..3] of TGLfloat ;
+  Mat_Spec : array[0..3] of TGLfloat ;
+  Mat_Dif : array[0..3] of TGLfloat ;
+  Mat_Amb : array[0..3] of TGLfloat ;
+  Mat_Emi : array[0..3] of TGLfloat ;
+  Shine : TGLfloat ;
   HomeDir : String ;
-  PerspectiveAngle, OrthoVarX, OrthoVarY : GLDouble ;
+  PerspectiveAngle, OrthoVarX, OrthoVarY : TGLdouble ;
   tGMF       :Array[0..255] of tGlyphMetricsFloat;
   XYZArray : TxyzArrayD ; // stores position of feedback cursor
-  CurrentAlphaValue : GLFloat ;
+  CurrentAlphaValue : TGLfloat ;
   FileDroped, DontRefresh, JustActivated, DispChange, GotShadowBool : Bool ;
   DropedFileName : String ;
   ZChangeCount, LastZCountPos, LastTopPos , LastLeftPos : Integer ;  // counts how many time Z height has been pressed
@@ -230,26 +231,34 @@ begin
     end ;
 end ;
 
-Function GetXYZCoord (Sender : TObject; Shift: TShiftState; X, Y : GLInt) : TxyzArrayD  ;
+Function GetXYZCoord (Sender : TObject; Shift: TShiftState; X, Y : TGLint) : TxyzArrayD  ;
 Var
-  WinXInt, WinYInt : GLInt ;
-  WinX, WinY, WinZ : GLDouble ;
-  WinZSingle : glFloat ;
-  ModelMatrix, ProjMatrix : array [1..16] of GLDouble ;
-  Viewport : array [1..4] of GLInt ;
+  WinXInt, WinYInt : TGLint ;
+  WinX, WinY, WinZ : TGLdouble ;
+  WinZSingle : TGLfloat ;
+  //ModelMatrix, ProjMatrix : array [1..16] of TGLdouble ;
+  ModelMatrix, ProjMatrix : TMatrix4d ;
+  // Viewport : array [1..4] of TGLint ;
+  Viewport : TVector4i ;
   ZPointer : pGLFloat ;
-  ResX, ResY, ResZ : glDouble ;
-  GotXYZ : GLInt ;
+  mm_ptr, pm_ptr: PGLdouble ;
+  vp_ptr : PGLint ;
+  ResX, ResY, ResZ : TGLdouble ;
+  GotXYZ : TGLint ;
   TempInt : integer ;
 begin
+ mm_ptr :=  pointer(@ModelMatrix[0])   ;
+ pm_ptr :=  pointer(@ProjMatrix[0])   ;
+ vp_ptr :=  pointer(@viewport[0])  ;
  ActivateRenderingContext(MainForm.Canvas.Handle,RC); // make context drawable
-    glGetDoublev(GL_MODELVIEW_MATRIX, @ModelMatrix[1]) ;
-    glGetDoublev(GL_PROJECTION_MATRIX, @ProjMatrix[1]) ;
-    glGetIntegerv(GL_VIEWPORT, @viewport[1]) ;
+    glGetDoublev(GL_MODELVIEW_MATRIX, mm_ptr) ;
+    glGetDoublev(GL_PROJECTION_MATRIX, pm_ptr) ;
+    glGetIntegerv(GL_VIEWPORT, vp_ptr) ;
 
     WinX := X ;
     WinXInt := X ;
-    WinYInt := Viewport[4] - Y - 1 ;
+    WinYInt := Viewport[3] - Y - 1 ;
+    //WinYInt := vp_ptr[4] - Y - 1 ;
     WinY :=  WinYInt ;
     //New(ZPointer) ;
     GetMem(ZPointer,4) ;
@@ -273,9 +282,10 @@ begin
     // WinZ :=  0.98;
     //gluUnProjectBorGL : function(winx, winy, winz: GLdouble; modelMatrix: PGLdouble; projMatrix: PGLdouble; viewport: PGLint;var objx, objy, objz: GLdouble): Integer; stdcall;
     //gluUnProject :      function(winx, winy, winz: GLdouble; modelMatrix: TMatrix4d; projMatrix: TMatrix4d; viewport: TVector4i; objx, objy, objz: PGLdouble): GLint; stdcall;
-    GotXYZ :=  gluUnProjectBorGL(WinX,WinY,WinZ,@ModelMatrix[1],@ProjMatrix[1],@ViewPort[1],ResX,ResY,ResZ) ;
+    //GotXYZ :=  gluUnProjectBorGL(WinX,WinY,WinZ,@ModelMatrix[1],@ProjMatrix[1],@ViewPort[1],ResX,ResY,ResZ) ;
+    GotXYZ :=  gluUnProject(WinX,WinY,WinZ,ModelMatrix,ProjMatrix,ViewPort,@ResX,@ResY,@ResZ) ;
     If GotXYZ = GL_TRUE Then
-       Form4.Label5.Caption := 'True' else  Form4.Label5.Caption := 'False' ; 
+       Form4.Label5.Caption := 'True' else  Form4.Label5.Caption := 'False' ;
 
    Result[1] := ResX ;  Result[2] := ResY ;  Result[3] := ResZ ;
    glReadBuffer(GL_BACK) ;
@@ -341,7 +351,7 @@ begin // initialize OpenGL and create a context for rendering
   XYZArray[1] := 0.0 ; XYZArray[2] := 0.0 ; XYZArray[3] := 0.0 ;   // stores position of feedback cursor
   LastZCountPos := UpDown1.Position ;
   InitOpenGL ;
-  RC:=CreateRenderingContext(Canvas.Handle,[opDoubleBuffered],32,0);
+  RC:=CreateRenderingContext(Canvas.Handle,[opDoubleBuffered],32,0,0,0,0);
 
   ActivateRenderingContext(Canvas.Handle,RC); // make context drawable, Set environment options
     BorderColor[0] := 1.0 ;  BorderColor[1] := 0.0 ; BorderColor[2] := 0.0 ; BorderColor[3] := 1.0 ;
@@ -380,7 +390,7 @@ end;
 
 procedure ShowRedSquare() ; // implementation
 Var
-TempF1, TempF2, TempF3 : GLFloat ;
+TempF1, TempF2, TempF3 : TGLfloat ;
 begin
 {  glEnable(GL_TEXTURE_2D) ;
   glMatrixMode(GL_TEXTURE) ;
@@ -486,7 +496,7 @@ glMatrixMode(GL_ModelView);
 
 end ;   }
 
-Procedure DisplayEyePointer(DispXpos, DispYpos, DispZpos: GLFloat) ;   // implementation
+Procedure DisplayEyePointer(DispXpos, DispYpos, DispZpos: TGLfloat) ;   // implementation
 begin
 ///////////////////////////////////////////////////////////////////////////
 // Eye pointer  call
@@ -508,7 +518,7 @@ end ;
 
 procedure DisplayScales(Sender : TObject) ;  // implementation
 Var
-  ScalebarZheight : GLFloat ;
+  ScalebarZheight : TGLfloat ;
   TempStr : String ;
 
 begin
@@ -783,10 +793,10 @@ end ;
 
 procedure TMainForm.FormPaint(Sender: TObject);
 Var
-  FogColor : Array[0..3] of GLFloat ;
-  FogMode : GLInt ;
+  FogColor : Array[0..3] of TGLfloat ;
+  FogMode : TGLint ;
 begin // draw somthing useful
-If DispChange Then
+  If DispChange Then
   begin
     MainForm.Close ;
 {    DestroyRenderingContext(RC);
@@ -794,52 +804,52 @@ If DispChange Then
     RC:=CreateRenderingContext(MainForm.Canvas.Handle,[opDoubleBuffered],32,0);  }
   end ;
 
-If (application.Active) and  ((DontRefresh=false) and (LastTopPos=MainForm.Top) and (LastLeftPos=MainForm.Left)) then   // draw the geometry, else just swapbuffer from last redraw
-begin
-//StopFull := Ticker ;
-ActivateRenderingContext(Canvas.Handle,RC); // make context drawable
-If FileDroped Then
-begin
-  FileDroped := False ;
-  OrigData := LoadOrig(DropedFileName) ;
-  OpenContinue(Sender) ;
-end ;
+  If (application.Active) and  ((DontRefresh=false) and (LastTopPos=MainForm.Top) and (LastLeftPos=MainForm.Left)) then   // draw the geometry, else just swapbuffer from last redraw
+  begin
+    //StopFull := Ticker ;
+    ActivateRenderingContext(Canvas.Handle,RC); // make context drawable
+    If FileDroped Then
+    begin
+      FileDroped := False ;
+      OrigData := LoadOrig(DropedFileName) ;
+      OpenContinue(Sender) ;
+    end ;
 
-Screen.Cursor := crHourglass ;
-  If FileLoaded = False Then
+    Screen.Cursor := crHourglass ;
+    If FileLoaded = False Then
     begin
       Open1.Click ;
       FileLoaded := True ;
     end ;
 
-   If SpeedButton2.Down Then // move viewer position
-   begin
+    If SpeedButton2.Down Then // move viewer position
+    begin
      EyeX := EyeX - ((XPos-XDown)*(ScalePerXY/10)) ;//(ScalePerXY*IHeight)/2,
      EyeY := EyeY - ((YPos-YDown)*(ScalePerXY/10)) ;//(3*(ScalePerXY*IHeight))/2,
-   end ;
-  If SpeedButton3.Down Then // move gaze direction (head stays in same place - i.e. rotate head)
+    end ;
+    If SpeedButton3.Down Then // move gaze direction (head stays in same place - i.e. rotate head)
     begin
        CenterX := CenterX - ((XPos-XDown)*(ScalePerXY/10))  ;
        CenterY := CenterY  - ((YPos-YDown)*(ScalePerXY/10));
     end ;
 
-  L0_POS[0] := EyeX ;  // light0 tracks eye position
-  L0_POS[1] := EyeY ;
-  L0_POS[2] := EyeZ ;  // *(MainForm.UpDown1.Position/100)
-  If Form3.CheckBox3.Checked Then L0_POS[3] := 1.0 else  L0_POS[3] := 0.0 ; // determines if light is directional(0.0) or positional(1.0)
-  L0_Dir[0] := (CenterX-(EyeX)) ;
-  L0_Dir[1] := (CenterY-(EyeY)) ;
-  L0_Dir[2] := (CenterZ-(EyeZ)) ;// CenterZ-EyeZ ;
-  glLightfv(GL_LIGHT0, GL_POSITION, @L0_POS[0]) ;
-  glLightfv(GL_LIGHT0,GL_SPOT_DIRECTION, @L0_Dir[0]) ;
+    L0_POS[0] := EyeX ;  // light0 tracks eye position
+    L0_POS[1] := EyeY ;
+    L0_POS[2] := EyeZ ;  // *(MainForm.UpDown1.Position/100)
+    If Form3.CheckBox3.Checked Then L0_POS[3] := 1.0 else  L0_POS[3] := 0.0 ; // determines if light is directional(0.0) or positional(1.0)
+    L0_Dir[0] := (CenterX-(EyeX)) ;
+    L0_Dir[1] := (CenterY-(EyeY)) ;
+    L0_Dir[2] := (CenterZ-(EyeZ)) ;// CenterZ-EyeZ ;
+    glLightfv(GL_LIGHT0, GL_POSITION, @L0_POS[0]) ;
+    glLightfv(GL_LIGHT0,GL_SPOT_DIRECTION, @L0_Dir[0]) ;
 
-  L1_POS[2] := StrToFloat(Form3.Edit27.Text) ; // Edit27 = Z height of light1
-  If L1_Pos[2] > 0 Then L1_Dir[2] := -1 else L1_Dir[2] := 1 ;
-  glLightfv(GL_LIGHT1, GL_POSITION, @L1_POS[0]) ;     // Light1 = stationary light
-  glLightfv(GL_LIGHT1,GL_SPOT_DIRECTION, @L1_Dir[0]) ;
+    L1_POS[2] := StrToFloat(Form3.Edit27.Text) ; // Edit27 = Z height of light1
+    If L1_Pos[2] > 0 Then L1_Dir[2] := -1 else L1_Dir[2] := 1 ;
+    glLightfv(GL_LIGHT1, GL_POSITION, @L1_POS[0]) ;     // Light1 = stationary light
+    glLightfv(GL_LIGHT1,GL_SPOT_DIRECTION, @L1_Dir[0]) ;
 
 
-  If Form1.CheckBox9.Checked Then   // enable fog
+    If Form1.CheckBox9.Checked Then   // enable fog
     begin
       glEnable(GL_FOG) ;
       FogColor[0] := BKGRed; FogColor[1] := BKGGreen ;   FogColor[2] := BKGBlue ; FogColor[3] := 1.0 ;
@@ -852,21 +862,21 @@ Screen.Cursor := crHourglass ;
       glFogf(GL_FOG_START, 10*ScalePerXY) ;
       glFogf(GL_FOG_END, ScalePerXY*256*Form1.TrackBar1.Position) ;
     end
-   else
+    else
      glDisable(GL_FOG) ;
 
-  glDrawBuffer(GL_BACK) ;
-  glClearColor(BKGRed,BKGGreen,BKGBlue,1.0) ;// background color of the context (set clear color for Color buffer)
-  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT); // clear background and depth buffer
+    glDrawBuffer(GL_BACK) ;
+    glClearColor(BKGRed,BKGGreen,BKGBlue,1.0) ;// background color of the context (set clear color for Color buffer)
+    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT); // clear background and depth buffer
 
 
 //  If (GotShadowBool=False) Then GetShadow(Sender) ;
 
-  If Form1.CheckBox6.Checked Then // red green stereo
+    If Form1.CheckBox6.Checked Then // red green stereo
     begin
       StereoVision(Sender)  ;
     end
-  Else
+    Else
     begin
       glLoadIdentity;             // set it to initial state
       gluLookAt(EyeX,EyeY,EyeZ,CenterX,CenterY,CenterZ,0,0,1); // set up a viewer position and view direction
@@ -923,34 +933,34 @@ Screen.Cursor := crHourglass ;
        end ;
     end ;
 
-  Form1.Label6.Caption :=  FloatToStrf(CenterX,ffGeneral,4,2) ; // direction of sight
-  Form1.Label7.Caption :=  FloatToStrf(CenterY,ffGeneral,4,2) ;
-  Form1.Label8.Caption :=  FloatToStrf(CenterZ,ffGeneral,4,2) ;
-  Form1.Label10.Caption :=  FloatToStrf(EyeX,ffGeneral,4,2) ;   // position of eyes
-  Form1.Label11.Caption :=  FloatToStrf(EyeY,ffGeneral,4,2) ;
-  Form1.Label12.Caption :=  FloatToStrf(EyeZ,ffGeneral,4,2) ;
-Screen.Cursor := crArrow ;
-DeactivateRenderingContext; // release control of context
+    Form1.Label6.Caption :=  FloatToStrf(CenterX,ffGeneral,4,2) ; // direction of sight
+    Form1.Label7.Caption :=  FloatToStrf(CenterY,ffGeneral,4,2) ;
+    Form1.Label8.Caption :=  FloatToStrf(CenterZ,ffGeneral,4,2) ;
+    Form1.Label10.Caption :=  FloatToStrf(EyeX,ffGeneral,4,2) ;   // position of eyes
+    Form1.Label11.Caption :=  FloatToStrf(EyeY,ffGeneral,4,2) ;
+    Form1.Label12.Caption :=  FloatToStrf(EyeZ,ffGeneral,4,2) ;
+    Screen.Cursor := crArrow ;
+    DeactivateRenderingContext; // release control of context
 
-DoFrameCounter ;  // calculate FPS result
+    DoFrameCounter ;  // calculate FPS result
 
-LastTopPos:= MainForm.Top  ; LastLeftPos := MainForm.Left ;  DontRefresh := false ;
-end // if mainform.active
-else
-  begin
-  try
-  ActivateRenderingContext(MainForm.Canvas.Handle,RC); // make context drawable
-    SwapBuffers(MainForm.Canvas.Handle) ;// copy back buffer to front
-  DeactivateRenderingContext; // release control of context
-  DontRefresh := false ;
-  LastTopPos:= MainForm.Top  ; LastLeftPos := MainForm.Left ;
-except
-  on EInvalidOp Do
-  end ;
-  end ;
+    LastTopPos:= MainForm.Top  ; LastLeftPos := MainForm.Left ;  DontRefresh := false ;
+  end // if mainform.active
+  else
+    begin
+    try
+    ActivateRenderingContext(MainForm.Canvas.Handle,RC); // make context drawable
+      SwapBuffers(MainForm.Canvas.Handle) ;// copy back buffer to front
+    DeactivateRenderingContext; // release control of context
+    DontRefresh := false ;
+    LastTopPos:= MainForm.Top  ; LastLeftPos := MainForm.Left ;
+  except
+    on EInvalidOp Do
+    end ;
+    end ;
 
-// Set8087CW(Saved8087CW);
-end;
+  // Set8087CW(Saved8087CW);
+  end;
 
 
 procedure TMainForm.FormKeyPress(Sender: TObject; var Key: Char);
@@ -962,7 +972,7 @@ end;
 
 procedure TMainForm.FormResize(Sender: TObject);
 begin // handle form resizing (viewport must be adjusted)
-{ActivateRenderingContext(Canvas.Handle,RC); // make context drawable
+ActivateRenderingContext(Canvas.Handle,RC); // make context drawable
   glViewport(0,0,Width,Height); // specify a viewport (has not necessarily to be the entire window)
   glMatrixMode(GL_PROJECTION); // activate projection matrix
   glLoadIdentity;              // set initial state
@@ -977,18 +987,18 @@ begin // handle form resizing (viewport must be adjusted)
   glMatrixMode(GL_ModelView);
   glLoadIdentity; // **** might not be needed ****
 
-//  SwapBuffers(MainForm.Canvas.Handle) ;// copy back buffer to front
+  SwapBuffers(MainForm.Canvas.Handle) ;// copy back buffer to front
 wglMakeCurrent(0,0); // another way to release control of context
-                                                                       }
+
 XPos := 0 ;
 YPos := 0 ;
 XDown := 0 ;
 YDown := 0 ;
-Speedbutton1.Left := MainForm.Width - 38 ;
-Speedbutton2.Left := MainForm.Width - 38 ;
-Speedbutton3.Left := MainForm.Width - 38 ;
-Speedbutton4.Left := MainForm.Width - 38 ;
-UpDown1.Left :=  MainForm.Width - 38     ;
+Speedbutton1.Left := MainForm.Width - 52 ;
+Speedbutton2.Left := MainForm.Width - 52 ;
+Speedbutton3.Left := MainForm.Width - 52 ;
+Speedbutton4.Left := MainForm.Width - 52 ;
+UpDown1.Left :=  MainForm.Width - 52     ;
 DontRefresh := false ;
 Refresh;
 end;
@@ -1041,16 +1051,16 @@ end;
 procedure glListSurface(Var Sender : TObject) ;
 var
   Y, X, YY, XX : Integer ;
-  aa, bbb, cc : GLDouble ;
-  RR, GG, BB, ZeroBaseLine : GLDouble ;
-  STORE1 : array[0..2,0..511] of GLDouble ;
-  STORE2 : array[0..2,0..511] of GLDouble ;
-  NA     : array[0..2,0..1023] of GLDouble ;
-  TEMP1, TEMP2, TEMP3 : array[0..2] of GLDouble ;
-  TriangleArea  : GLDouble  ;
+  aa, bbb, cc : TGLdouble ;
+  RR, GG, BB, ZeroBaseLine : TGLdouble ;
+  STORE1 : array[0..2,0..511] of TGLdouble ;
+  STORE2 : array[0..2,0..511] of TGLdouble ;
+  NA     : array[0..2,0..1023] of TGLdouble ;
+  TEMP1, TEMP2, TEMP3 : array[0..2] of TGLdouble ;
+  TriangleArea  : TGLdouble  ;
   N1 : TNormalDataD ;
-  VectProd : array[0..2] of GLDouble ;
-  VectMag : GLDouble ;
+  VectProd : array[0..2] of TGLdouble ;
+  VectMag : TGLdouble ;
   XXXbool : bool ;
   ErrorInt, FontSize : integer ;
   TempStr : String ;
@@ -1512,7 +1522,7 @@ end;
 procedure TMainForm.FormMouseMove(Sender: TObject; Shift: TShiftState; X,
   Y: Integer);
 Var
-  TempFloat : glDouble ;
+  TempFloat : TGLdouble ;
   TempY : Integer ;  // used to hold actual Y coordinate in client viewport
   TempStr : String  ;
 begin
@@ -1941,6 +1951,7 @@ end ;
 
 procedure TMainForm.Open1Click(Sender: TObject);
 begin
+  FileLoaded := True ;
   With MainForm.OpenDialog1 DO
     If Execute Then
       begin
@@ -2444,7 +2455,7 @@ Var
   LeftRight : Integer ;
   V1, V2, V3 : Array[0..2] of double ;
   N1 : TNormalDataD ;
-  Parallax  : GLDouble ;
+  Parallax  : TGLdouble ;
   Normalize : Bool ;
 begin
 Normalize := True ;
@@ -2490,7 +2501,7 @@ glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 end;
 
 
-procedure ChangeAlpha(Sender : TObject; AlphaValue : GLFloat) ;
+procedure ChangeAlpha(Sender : TObject; AlphaValue : TGLfloat) ;
 // Changes all alpha values of material properties and light properties
 begin
     LM_Amb[3] := AlphaValue ;
